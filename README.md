@@ -56,12 +56,6 @@ style; the file name (minus `.json`) is the style id:
 | `~/.config/opencode/output-styles/` | Style pack JSON files. |
 | `~/.local/state/opencode/output-styles/` | Runtime state: debug logs and the system-snapshot sidecar. |
 
-Coming from `persona-injector`: the plugin reads the predecessor's
-`persona-injector.json` once to adopt its active `persona` id, and style ids
-keep the old file-name convention, so moving the old JSON files from
-`~/.config/opencode/personas/` into `~/.config/opencode/output-styles/`
-preserves both the selection and the ids.
-
 ## Debugging
 
 Set `OPENCODE_WLIB_DEBUG=true` to write a debug log to

@@ -6,7 +6,7 @@
  * is unit-testable with `bun:test` while the entrypoint stays a thin adapter.
  *
  * Behaviour (parity with the v1 `system.transform` pipeline):
- * - style JSON compatibility + legacy migration (via injected `readConfig`)
+ * - style JSON compatibility (via injected `readConfig`)
  * - title-generator exclusion (`isTitleGenerator`, from wlib), failing closed:
  *   an indeterminate predicate skips injection AND snapshot
  * - marker protection + per-call duplicate guard (`STYLE_MARKER`)
