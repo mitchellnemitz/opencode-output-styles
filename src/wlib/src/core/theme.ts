@@ -26,32 +26,30 @@ export interface ThemePalette {
   /**
    * Success/positive feedback color (e.g. a completed operation).
    *
-   * Optional on the base shape for source compatibility: it was added after
-   * the initial palette, so existing `ThemePalette` literals and
-   * `WlibHost<ThemePalette>` implementations must keep compiling. Both
-   * resolvers still populate it at runtime; {@link SemanticThemePalette}
-   * narrows it to required for v2 consumers.
+   * Optional on the base shape: {@link resolveThemeColors} leaves it
+   * unpopulated when the theme names no success color.
+   * {@link resolveSemanticTheme} always populates it at runtime;
+   * {@link SemanticThemePalette} narrows it to required.
    */
   success?: ThemeColorValue
   /**
    * Warning/caution feedback color.
    *
-   * Optional on the base shape for source compatibility: it was added after
-   * the initial palette, so existing `ThemePalette` literals and
-   * `WlibHost<ThemePalette>` implementations must keep compiling. Both
-   * resolvers still populate it at runtime; {@link SemanticThemePalette}
-   * narrows it to required for v2 consumers.
+   * Optional on the base shape: {@link resolveThemeColors} leaves it
+   * unpopulated when the theme names no warning color.
+   * {@link resolveSemanticTheme} always populates it at runtime;
+   * {@link SemanticThemePalette} narrows it to required.
    */
   warning?: ThemeColorValue
   /** Selection/active background color. */
   primary: ThemeColorValue
   /**
-   * Text color used on the selected list item. Required in the legacy/v1
-   * shape, but its value may be `undefined` (`ThemeColorValue | undefined`):
-   * the v1 loose resolver (`resolveThemeColors`) may leave it `undefined`.
-   * The v2 semantic resolver (`resolveSemanticTheme`) always yields a visible
-   * value and returns {@link SemanticThemePalette}, where `selectedText` is
-   * required and always defined.
+   * Text color used on the selected list item. The base shape types it as
+   * possibly `undefined` (`ThemeColorValue | undefined`): the loose resolver
+   * (`resolveThemeColors`) may leave it `undefined` when the theme names no
+   * selection text. The semantic resolver (`resolveSemanticTheme`) always
+   * yields a visible value and returns {@link SemanticThemePalette}, where
+   * `selectedText` is required and always defined.
    */
   selectedText: ThemeColorValue | undefined
   /** Background color of the app/surface. */
@@ -63,15 +61,12 @@ export interface ThemePalette {
 /**
  * v2-specific resolved palette: every field of {@link ThemePalette}, but
  * `selectedText`, `success` and `warning` are **required**.
- * `resolveSemanticTheme` (v2) never yields `undefined` for them —
+ * `resolveSemanticTheme` never yields `undefined` for them —
  * `selectedText` falls back to the resolved, visible `fg` and the feedback
- * colors fall back to `THEME_DEFAULTS` — so v2 chip/label consumers get
- * non-optional values without a `?? fallback`, while the base
- * {@link ThemePalette} keeps `success`/`warning` optional and types
- * `selectedText` as required but possibly `undefined` for backwards
- * compatibility.
+ * colors fall back to `THEME_DEFAULTS` — so consumers get
+ * non-optional values without a `?? fallback`.
  *
- * Extends {@link ThemePalette}, so it is a drop-in wherever the legacy shape is
+ * Extends {@link ThemePalette}, so it is a drop-in wherever the base shape is
  * expected (e.g. `createV2Host` returns `WlibHost<SemanticThemePalette>`, which
  * remains assignable to `WlibHost`).
  */
@@ -95,7 +90,7 @@ export interface ThemePaletteFallbacks {
   panel?: ThemeColorValue
 }
 
-/** Default palette values, shared by the v1 loose resolver and the v2 semantic resolver. */
+/** Default palette values, shared by both resolvers. */
 export const THEME_DEFAULTS = {
   fg: "#ffffff",
   muted: "#888888",
@@ -196,9 +191,8 @@ function visibleColor(v: unknown): ThemeColorValue | undefined {
  * `success`/`warning` map from `theme.success`/`theme.warning`, then the
  * caller's fallbacks, then `THEME_DEFAULTS`.
  *
- * `success`/`warning` are optional on the returned {@link ThemePalette} type
- * only for source compatibility; this resolver always populates them at
- * runtime (never `undefined`).
+ * `success`/`warning` are optional on the returned {@link ThemePalette} type;
+ * this resolver always populates them at runtime (never `undefined`).
  */
 export function resolveThemeColors(
   theme: { [key: string]: unknown } | null | undefined,
@@ -241,18 +235,14 @@ export function resolveThemeColors(
  *                   paints the accent on `focused`, so focused wins.
  * - `selectedText`← `text.action.primary.focused`, then `selected`, then
  *                   `.base` (text on the primary background), and finally the
- *                   resolved `fg`. v2 chip consumers always need *visible*
- *                   text, so when every selection text state is absent or
- *                   transparent this never yields `undefined` — it falls back
- *                   to the resting foreground. (The v1 loose resolver,
- *                   {@link resolveThemeColors}, deliberately keeps its legacy
- *                   `undefined` behavior.)
+ *                   resolved `fg`. Consumers always need *visible* text, so
+ *                   when every selection text state is absent or transparent
+ *                   this never yields `undefined` — it falls back to the
+ *                   resting foreground. (The loose resolver,
+ *                   {@link resolveThemeColors}, deliberately keeps `undefined`.)
  * - `background`  ← `background.base`
- * - `panel`       ← `background.raised.base`, then `background.raised.high`.
- *                   `.base` wins for 1:1 overlay-surface parity with the v1
- *                   plugin scheme: the v1→v2 theme migrator maps legacy
- *                   `backgroundPanel` to resolved `background.raised.base`,
- *                   while `.high` is a lighter menu surface.
+ * - `panel`       ← `background.raised.base`, then `background.raised.high`:
+ *                   the dialog/panel surface, then the lighter menu surface.
  *
  * Resolved keys carry no `$` sigil (unlike the raw `$focused`/`$selected`
  * definition keys), matching the host's `ResolvedTheme`.
@@ -264,15 +254,15 @@ export function resolveThemeColors(
  * selected-text token is *skipped* rather than preserved), and for the semantic
  * feedback tokens (`success`/`warning`) it would render invisible status text.
  * A transparent feedback token therefore falls back to its `THEME_DEFAULTS`
- * counterpart. Unlike v1, v2 then lands on the resolved foreground instead of
- * `undefined` so a chip can never render invisible text; the resolved foreground
+ * counterpart, and `selectedText` lands on the resolved foreground instead of
+ * `undefined` so a label can never render invisible text; the resolved foreground
  * is itself drawn only from a visible `text.base` (a transparent one falls
  * through to `THEME_DEFAULTS.fg`). Non-transparent RGBA objects are preserved by
  * identity.
  *
- * Returns the v2-specific {@link SemanticThemePalette} — the legacy
- * {@link ThemePalette} shape with `selectedText`, `success` and `warning`
- * narrowed to required (this resolver always yields a value for all three).
+ * Returns {@link SemanticThemePalette} — the base {@link ThemePalette} shape
+ * with `selectedText`, `success` and `warning` narrowed to required (this
+ * resolver always yields a value for all three).
  */
 export function resolveSemanticTheme(
   theme: SemanticThemeLike | null | undefined,

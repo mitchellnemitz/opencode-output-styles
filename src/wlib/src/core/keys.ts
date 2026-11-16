@@ -31,11 +31,10 @@ export interface KeyLayerConfig {
    */
   priority?: number
   /**
-   * v2 keymap mode this layer is scoped to. wlib defaults it to `"global"` so
+   * Keymap mode this layer is scoped to. wlib defaults it to `"global"` so
    * setup/global and dialog layers stay active across every input mode (base,
-   * modal, composer). On OpenCode 2.0.27 the active mode is `modal` while a
-   * dialog is open, so a layer left at the host default (`base`) silently goes
-   * inactive. v1 hosts have no mode concept and ignore this field.
+   * modal, composer). The active mode is `modal` while a dialog is open, so a
+   * layer left at the host default (`base`) silently goes inactive.
    */
   mode?: string
 }

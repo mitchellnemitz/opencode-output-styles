@@ -2,15 +2,8 @@
  * opencode-wlib — host adapter contract.
  *
  * A single, host-agnostic surface the library's command/keymap, dialog,
- * theme, and renderer helpers talk to. Two implementations exist:
- *
- * - `./v2` (`createV2Host`) — OpenCode 2.x (`@opencode/plugin/tui`).
- *   The supported production path.
- * - `./v1` (`createV1Host`) — OpenCode 1.x (`@opencode-ai/plugin/tui`).
- *   DEPRECATED, kept only for a transition window (removed in the v2 cleanup).
- *
- * A runtime adapter must never mix the two host APIs: pick exactly one
- * factory and pass the resulting `WlibHost` into the core/ui modules.
+ * theme, and renderer helpers talk to. One implementation exists:
+ * `./v2` (`createV2Host`) — OpenCode 2.x (`@opencode/plugin/tui`).
  *
  * Types only — no runtime values, so importing it from pure/testable modules
  * is always erased by the runtime transpiler.
@@ -22,13 +15,13 @@ import type { KeyLayerConfig } from "../core/keys"
 import type { ThemePalette } from "../core/theme"
 
 /** Which host generation an adapter targets. */
-export type HostKind = "v1" | "v2"
+export type HostKind = "v2"
 
-/** Dialog presentation options (v2 `ui.dialog.set`; v1 maps to `setSize`). */
+/** Dialog presentation options. */
 export interface HostDialogOptions {
   /** Width tier. */
   size?: DialogSize
-  /** Center the dialog (v2 only; ignored by the v1 adapter). */
+  /** Center the dialog. */
   centered?: boolean
 }
 
@@ -74,14 +67,12 @@ export interface HostCommandOptions {
 
 /**
  * The host surface every wlib command/keymap/dialog/theme helper uses.
- * Implemented once per host generation; never mixed within one adapter.
  *
  * Generic over the palette its `theme()` resolves:
- * - `createV2Host` returns `WlibHost<SemanticThemePalette>` — the v2 palette
+ * - `createV2Host` returns `WlibHost<SemanticThemePalette>` — the palette
  *   whose `selectedText` is required (always visible).
- * - `createV1Host` returns the default `WlibHost<ThemePalette>` — the legacy
- *   shape, whose `selectedText` is required but may be `undefined`
- *   (`ThemeColorValue | undefined`).
+ * - The unparameterised `WlibHost` is `WlibHost<ThemePalette>` — the base
+ *   shape, whose `selectedText` is required but may be `undefined`.
  *
  * The parameter is covariant (`theme(): P`), so a `WlibHost<SemanticThemePalette>`
  * is assignable wherever the default `WlibHost` (i.e. `WlibHost<ThemePalette>`)

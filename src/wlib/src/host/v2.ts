@@ -1,12 +1,10 @@
 /**
- * opencode-wlib — OpenCode v2 host adapter (PRODUCTION).
+ * opencode-wlib — OpenCode 2.x host adapter.
  *
- * Built on the OpenCode 2.0.27 CLI plugin context (`@opencode/plugin/tui`).
- * This is the supported path going forward: consumers obtain the plugin
- * `Context` in `setup(context)` (or `usePlugin()`) and wrap it once with
- * `createV2Host(context)`, then hand that host to every wlib helper.
- *
- * The v1 adapter lives in `./v1` and is deprecated — do not import both.
+ * Built on the OpenCode 2.x CLI plugin context (`@opencode/plugin/tui`).
+ * Consumers obtain the plugin `Context` in `setup(context)` (or `usePlugin()`)
+ * and wrap it once with `createV2Host(context)`, then hand that host to every
+ * wlib helper.
  */
 
 import type { Plugin } from "@opencode/plugin/tui"
@@ -24,18 +22,18 @@ import type { SemanticThemePalette } from "../core/theme"
 import { resolveSemanticTheme } from "../core/theme"
 
 /**
- * v1 key names that differ from their v2 `bind` spelling.
- * v2 uses `return` for the enter key (see the host's own bindings, e.g.
+ * Key names wlib accepts that differ from the host's `bind` spelling.
+ * The host uses `return` for the enter key (see its own bindings, e.g.
  * `bind: "return"` in the TUI feature plugins); every other name wlib emits
  * (`escape`, arrows, `pageup`/`pagedown`, single letters) is identical.
  */
-const V2_KEY_ALIASES: Record<string, string> = {
+const KEY_ALIASES: Record<string, string> = {
   enter: "return",
 }
 
-/** Normalize a wlib/v1 key spec to the v2 `bind` spelling. */
+/** Normalize a wlib key spec to the host's `bind` spelling. */
 export function toV2Key(key: string): string {
-  return V2_KEY_ALIASES[key] ?? key
+  return KEY_ALIASES[key] ?? key
 }
 
 /** Resolve the optional key binding (inline desc defaults to the title). */
@@ -55,9 +53,9 @@ function resolveKey(
  * `bind: "down,j,right,l"`). The layer's `bindings` ID list is unnecessary
  * because the commands own their bindings.
  *
- * `mode` defaults to `"global"`: on OpenCode 2.0.27 the active mode is `modal`
- * while a dialog is open and the host layer default is `base`, so a layer left
- * at that default is inactive exactly when its dialog is visible. An explicit
+ * `mode` defaults to `"global"`: the active mode is `modal` while a dialog
+ * is open and the keymap layer default is `base`, so a layer left at that
+ * default is inactive exactly when its dialog is visible. An explicit
  * `config.mode` still wins, preserving the caller's override.
  */
 export function toV2Layer(config: KeyLayerConfig): KeymapLayer {
@@ -121,7 +119,7 @@ export function createV2Host(context: Plugin.Context): WlibHost<SemanticThemePal
       // `keymap.layer` is reactive: the layer belongs to the computation that
       // created it and is disposed automatically, so there is no cleanup handle.
       // `mode: "global"` keeps palette/slash commands and their key bindings
-      // reachable in every input mode — without it the 2.0.27 host defaults the
+      // reachable in every input mode — without it the host defaults the
       // layer to `base`, which is inactive while a dialog pushes `modal`.
       context.keymap.layer(() => ({
         mode: "global",

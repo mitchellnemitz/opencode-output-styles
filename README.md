@@ -23,8 +23,6 @@ Inspired by the author's earlier `persona-injector` plugin.
 opencode plugin add github:mitchellnemitz/opencode-output-styles
 ```
 
-The repo is private, so the installing machine needs GitHub access to it.
-
 ## Style packs
 
 Style packs live in `~/.config/opencode/output-styles/` as one JSON file per
